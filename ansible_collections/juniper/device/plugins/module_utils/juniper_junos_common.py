@@ -299,6 +299,17 @@ class ModuleDocFragment(object):
         required: false
         type: bool
         default: false
+      allow_agent:
+        description:
+          - Specifies whether to use keys provided by an SSH agent for authentication.
+            If set to C(true), the SSH connection will use any keys loaded in the agent.
+            If set to C(false), keys from the SSH agent will not be used.
+            If set to C(none), the default behavior is applied: agent keys are used only if
+            both password and private key file are not provided.
+            Default is C(none).
+        required: false
+        type: bool
+        default: none
 """
 
     LOGGING_DOCUMENTATION = """
@@ -489,6 +500,7 @@ connection_spec = {
     ),
     "timeout": dict(type="int", required=False, default=30),
     "huge_tree": dict(type="bool", required=False, default=False),
+    "allow_agent": dict(type="bool", required=False, default=None),
 }
 
 # Connection arguments which are mutually exclusive.

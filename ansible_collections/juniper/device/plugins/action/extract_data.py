@@ -61,6 +61,7 @@ connection_spec_fallbacks = {
     "console": ["console"],
     "mode": ["mode"],
     "timeout": ["timeout", "ansible_timeout"],
+    "allow_agent": ["ansible_ssh_allow_agent"],
 }
 
 
