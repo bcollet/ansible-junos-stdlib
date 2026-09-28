@@ -88,6 +88,18 @@ options:
                 - Action to take after matching condition (allow, discard/reject)
                 type: str
                 choices: [permit, deny]
+              log:
+                description:
+                - Log the packet
+                type: bool
+              is_fragment:
+                description:
+                - Match if packet is a fragment
+                type: bool
+              next_term:
+                description:
+                - Continue evaluating the packet against the next term in the filter
+                type: bool
               source:
                 type: dict
                 description:
@@ -244,6 +256,12 @@ options:
                       ttl_exceeded:
                         description: TTL exceeded
                         type: bool
+                      unreachable:
+                        description:
+                          - All destination unreachable messages.
+                          - For IPv4 (afi C(ipv4)) this maps to icmp-type C(unreachable).
+                          - For IPv6 (afi C(ipv6)) this maps to icmp-type C(destination-unreachable).
+                        type: bool
   running_config:
     description:
       - This option is used only with state I(parsed).
@@ -253,6 +271,12 @@ options:
         transforms it into Ansible structured data as per the resource module's argspec
         and the value is then returned in the I(parsed) key within the result
     type: str
+  comment:
+    description:
+    - Commit comment to be associated with the configuration changes.
+    - This allows tracking the reason for configuration changes (e.g., change management ticket).
+    type: str
+    default: configured by junos_acls
   state:
     description:
     - The state the configuration should be left in

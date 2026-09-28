@@ -34,17 +34,10 @@
 from __future__ import absolute_import, division, print_function
 
 
-try:
-    import xmltodict
-
-    HAS_XMLTODICT = True
-except ImportError:
-    HAS_XMLTODICT = False
-
 __metaclass__ = type
 
-DOCUMENTATION = """author: Juniper Automation Team
-connection: pyez
+DOCUMENTATION = """name: pyez
+author: Juniper Networks (@juniper)
 short_description: Use pyez to run command on JUNOS appliances
 description:
 - This connection plugin provides a connection to remote devices over the junos-pyez library.
@@ -214,6 +207,13 @@ options:
 import json
 import logging
 
+try:
+    import xmltodict
+
+    HAS_XMLTODICT = True
+except ImportError:
+    HAS_XMLTODICT = False
+
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.connection import NetworkConnectionBase, ensure_connect
@@ -315,6 +315,18 @@ logging.getLogger("ncclient").setLevel(logging.INFO)
 
 # Supported configuration modes
 CONFIG_MODE_CHOICES = ["exclusive", "private", "dynamic", "batch", "ephemeral"]
+
+
+def _serialize_fact(obj):
+    """Convert non-JSON-serializable PyEZ fact values to JSON-safe types.
+
+    Namedtuples (e.g. junos.version_info) are converted to plain dicts so that
+    downstream consumers receive structured data rather than opaque strings.
+    All other non-serializable objects fall back to their string representation.
+    """
+    if hasattr(obj, "_fields"):  # namedtuple
+        return dict(zip(obj._fields, obj))
+    return str(obj)
 
 
 class Connection(NetworkConnectionBase):
@@ -503,18 +515,27 @@ class Connection(NetworkConnectionBase):
         rpc_val = rpc_val.encode("utf-8")
         parser = etree.XMLParser(ns_clean=True, recover=True, encoding="utf-8")
         rpc_etree = etree.fromstring(rpc_val, parser=parser)
-        resp = self.dev.rpc(
-            rpc_etree,
-            normalize=bool(format == "xml"),
-            ignore_warning=ignore_warning,
-        )
+        try:
+            resp = self.dev.rpc(
+                rpc_etree,
+                normalize=bool(format == "xml"),
+                ignore_warning=ignore_warning,
+            )
+        except pyez_exception.RpcTimeoutError as ex:
+            raise AnsibleError("RpcTimeoutError: %s" % str(ex))
+        except (pyez_exception.RpcError, pyez_exception.ConnectError) as ex:
+            raise AnsibleError("RpcError: %s" % str(ex))
         if format == "json":
             return resp
         return etree.tostring(resp)
 
+    @ensure_connect
     def get_facts(self):
         """Get device facts."""
-        return dict(self.dev.facts)
+        facts = self.dev.facts
+        if facts is None:
+            return {}
+        return json.loads(json.dumps(dict(facts), default=_serialize_fact))
 
     def ping_device(self, normalize, **params):
         """Ping the device.

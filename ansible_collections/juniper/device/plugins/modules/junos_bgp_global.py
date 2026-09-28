@@ -62,6 +62,12 @@ options:
       transforms it into Ansible structured data as per the resource module's argspec
       and the value is then returned in the I(parsed) key within the result
     type: str
+  comment:
+    description:
+    - Commit comment to be associated with the configuration changes.
+    - This allows tracking the reason for configuration changes (e.g., change management ticket).
+    type: str
+    default: configured by junos_bgp_global
   config:
     description: A list of BGP process configuration.
     type: dict
@@ -787,6 +793,13 @@ options:
           name:
             description: Specify the name of the group
             type: str
+          inactive: &inactive
+            description: Deactivate this BGP group.
+            type: bool
+          apply_groups:
+            description: Inherit configuration from global configuration groups.
+            type: list
+            elements: str
           accept_remote_nexthop: *accept_remote_nexthop
           add_path_display_ipv4_address: *add_path_display_ipv4_address
           advertise_bgp_static: *advertise_bgp_static
@@ -872,6 +885,11 @@ options:
               neighbor_address:
                 description: Specify neighbor address.
                 type: str
+              inactive: *inactive
+              apply_groups:
+                description: Inherit configuration from global configuration groups.
+                type: list
+                elements: str
               accept_remote_nexthop: *accept_remote_nexthop
               add_path_display_ipv4_address: *add_path_display_ipv4_address
               advertise_bgp_static: *advertise_bgp_static

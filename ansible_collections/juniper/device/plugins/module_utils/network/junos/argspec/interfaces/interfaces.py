@@ -46,7 +46,7 @@ class InterfacesArgs(object):
                     "choices": ["automatic", "full-duplex", "half-duplex"],
                     "type": "str",
                 },
-                "enabled": {"default": True, "type": "bool"},
+                "enabled": {"type": "bool"},
                 "hold_time": {
                     "options": {
                         "down": {"type": "int"},
@@ -57,12 +57,15 @@ class InterfacesArgs(object):
                 },
                 "mtu": {"type": "int"},
                 "name": {"required": True, "type": "str"},
+                "vlan_tagging": {"type": "bool"},
                 "speed": {"type": "str"},
                 "units": {
                     "elements": "dict",
                     "options": {
                         "name": {"type": "int"},
                         "description": {"type": "str"},
+                        "enabled": {"type": "bool"},
+                        "vlan_id": {"type": "int"},
                     },
                     "type": "list",
                 },
@@ -70,6 +73,10 @@ class InterfacesArgs(object):
             "type": "list",
         },
         "running_config": {"type": "str"},
+        "comment": {
+            "type": "str",
+            "default": "configured by junos_interfaces",
+        },
         "state": {
             "choices": [
                 "merged",

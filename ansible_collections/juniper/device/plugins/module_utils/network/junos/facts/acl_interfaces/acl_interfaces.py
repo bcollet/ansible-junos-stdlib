@@ -100,9 +100,12 @@ class Acl_interfacesFacts(object):
                 {"config": objs},
             )
             for cfg in params["config"]:
-                facts["acl_interfaces"].append(utils.remove_empties(cfg))
+                cfg = utils.remove_empties(cfg)
+                if not cfg.get("access_groups"):
+                    continue
+                facts["acl_interfaces"].append(cfg)
                 # Included for compatibility, remove after 2025-07-01
-                facts["junos_acl_interfaces"].append(utils.remove_empties(cfg))
+                facts["junos_acl_interfaces"].append(cfg)
 
         ansible_facts["ansible_network_resources"].update(facts)
         return ansible_facts
@@ -133,7 +136,13 @@ class Acl_interfacesFacts(object):
         if "unit" in conf["interface"] and "family" in conf["interface"]["unit"]:
             for family in conf["interface"]["unit"]["family"].keys():
                 access_groups = {
-                    "afi": "ipv6" if family == "inet6" else "ipv4",
+                    "afi": (
+                        "ipv6"
+                        if family == "inet6"
+                        else "ethernet-switching"
+                        if family == "ethernet-switching"
+                        else "ipv4"
+                    ),
                     "acls": [],
                 }
                 if conf["interface"]["unit"]["family"][family] is not None and conf["interface"][
@@ -141,15 +150,27 @@ class Acl_interfacesFacts(object):
                 ]["family"][family].get(
                     "filter",
                 ):
-                    for direction in ["input-list", "output-list"]:
-                        rendered_direction = "in" if direction == "input-list" else "out"
-                        if conf["interface"]["unit"]["family"][family]["filter"].get(direction):
-                            acl_name = conf["interface"]["unit"]["family"][family]["filter"][
-                                direction
-                            ]
+                    # "input"/"output" are the standard single-filter
+                    # attachments; "input-list"/"output-list" carry multiple
+                    # filters. Junos returns "input"/"output" as a dict with a
+                    # "filter-name" key.
+                    directions = {
+                        "input": "in",
+                        "input-list": "in",
+                        "output": "out",
+                        "output-list": "out",
+                    }
+                    filter_conf = conf["interface"]["unit"]["family"][family]["filter"]
+                    for direction, rendered_direction in directions.items():
+                        if filter_conf.get(direction):
+                            acl_name = filter_conf[direction]
                             if not isinstance(acl_name, list):
                                 acl_name = [acl_name]
                             for filter_name in acl_name:
+                                if isinstance(filter_name, dict):
+                                    filter_name = filter_name.get("filter-name")
+                                if not filter_name:
+                                    continue
                                 access_groups["acls"].append(
                                     {
                                         "name": filter_name,
@@ -157,7 +178,17 @@ class Acl_interfacesFacts(object):
                                     },
                                 )
                 if access_groups["acls"]:
-                    config["name"] = conf["interface"]["name"]
+                    interface_name = conf["interface"]["name"]
+                    unit_name = conf["interface"]["unit"].get("name", "0")
+                    config["name"] = (
+                        "{0}.{1}".format(interface_name, unit_name)
+                        if str(unit_name) != "0"
+                        else interface_name
+                    )
+                    if "vlan-tagging" in conf["interface"]:
+                        config["vlan_tagging"] = True
+                    if "vlan-id" in conf["interface"]["unit"]:
+                        config["vlan_id"] = int(conf["interface"]["unit"]["vlan-id"])
                     config["access_groups"].append(access_groups)
 
         return utils.remove_empties(config)

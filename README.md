@@ -68,7 +68,7 @@ should be added to the Ansible configuration file in order to allow the jsnapy c
 This modules requires the following to be installed on the Ansible control machine:
 
 - Python >= 3.12
-- [Ansible](https://pypi.org/project/ansible/) 2.17 or later
+- [ansible-core](https://pypi.org/project/ansible/) 2.17 or later
 - Junos [py-junos-eznc](https://github.com/Juniper/py-junos-eznc) 2.7.3 or later
 - [jxmlease](https://github.com/Juniper/jxmlease) 1.0.1 or later
 - [xmltodict](https://pypi.org/project/xmltodict/) 0.13.0 or later
@@ -97,7 +97,7 @@ collections:
 To upgrade the collection to the latest available version, run the following command:
 
 ```bash
-ansible-galaxy collection install juniper.devie --upgrade
+ansible-galaxy collection install juniper.device --upgrade
 ```
 
 You can also install a specific version of the collection. Use the following syntax to install version 1.0.0:

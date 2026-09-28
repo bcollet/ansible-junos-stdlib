@@ -64,11 +64,14 @@ options:
         - full-duplex
         - half-duplex
       enabled:
-        default: true
         description:
         - Administrative state of the interface.
         - Set the value to C(true) to administratively enabled the interface or C(false)
           to disable it.
+        type: bool
+      vlan_tagging:
+        description:
+        - Enable VLAN tagging on the interface.
         type: bool
       hold_time:
         description:
@@ -105,6 +108,12 @@ options:
           description:
             description: Specify logical interface description.
             type: str
+          enabled:
+            description: Administrative state of the logical interface unit.
+            type: bool
+          vlan_id:
+            description: Specify VLAN ID for the logical interface.
+            type: int
   running_config:
     description:
     - This option is used only with state I(parsed).
@@ -114,6 +123,12 @@ options:
       transforms it into Ansible structured data as per the resource module's argspec
       and the value is then returned in the I(parsed) key within the result.
     type: str
+  comment:
+    description:
+    - Commit comment to be associated with the configuration changes.
+    - This allows tracking the reason for configuration changes (e.g., change management ticket).
+    type: str
+    default: configured by junos_interfaces
   state:
     choices:
     - merged

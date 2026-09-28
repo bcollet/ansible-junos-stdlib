@@ -55,8 +55,25 @@ options:
     suboptions:
       name:
         description:
-        - Name/Identifier for the interface.
+        - Name/Identifier for the interface. Use dotted notation for a logical
+          interface, for example C(xe-0/0/9.10) or C(irb.10).
         type: str
+      vlan_tagging:
+        description:
+        - Enable VLAN tagging on the interface.
+        type: bool
+      vlan_id:
+        description:
+        - VLAN ID for a tagged logical interface.
+        type: int
+      filter_binding:
+        description:
+        - Controls the Junos XML tags used to bind filters to the interface.
+        - C(list) uses C(input-list)/C(output-list), supported on standard Junos.
+        - C(singular) uses C(input)/C(output), required on Junos EVO.
+        type: str
+        choices: [list, singular]
+        default: list
       access_groups:
         type: list
         elements: dict
@@ -67,7 +84,7 @@ options:
             description:
             - Specifies the AFI for the ACL(s) to be configured on this interface.
             type: str
-            choices: [ipv4, ipv6]
+            choices: [ipv4, ipv6, ethernet-switching]
           acls:
             type: list
             description:
@@ -93,6 +110,12 @@ options:
       transforms it into Ansible structured data as per the resource module's argspec
       and the value is then returned in the I(parsed) key within the result
     type: str
+  comment:
+    description:
+    - Commit comment to be associated with the configuration changes.
+    - This allows tracking the reason for configuration changes (e.g., change management ticket).
+    type: str
+    default: configured by junos_acl_interfaces
   state:
     description:
     - The state the configuration should be left in.

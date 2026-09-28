@@ -55,15 +55,29 @@ class Acl_interfacesArgs(object):  # pylint: disable=R0903
                             },
                             "type": "list",
                         },
-                        "afi": {"choices": ["ipv4", "ipv6"], "type": "str"},
+                        "afi": {
+                            "choices": ["ipv4", "ipv6", "ethernet-switching"],
+                            "type": "str",
+                        },
                     },
                     "type": "list",
                 },
                 "name": {"type": "str"},
+                "vlan_id": {"type": "int"},
+                "vlan_tagging": {"type": "bool"},
+                "filter_binding": {
+                    "type": "str",
+                    "choices": ["list", "singular"],
+                    "default": "list",
+                },
             },
             "type": "list",
         },
         "running_config": {"type": "str"},
+        "comment": {
+            "type": "str",
+            "default": "configured by junos_acl_interfaces",
+        },
         "state": {
             "choices": [
                 "merged",

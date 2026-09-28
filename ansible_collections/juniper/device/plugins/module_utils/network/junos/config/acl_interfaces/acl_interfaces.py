@@ -108,7 +108,10 @@ class Acl_interfaces(ConfigBase):
                 commit = not self._module.check_mode
                 if diff:
                     if commit:
-                        commit_configuration(self._module)
+                        kwargs = {
+                            "comment": self._module.params.get("comment"),
+                        }
+                        commit_configuration(self._module, **kwargs)
                     else:
                         discard_changes(self._module)
                     result["changed"] = True
@@ -172,10 +175,19 @@ class Acl_interfaces(ConfigBase):
         return tostring(root)
 
     def _get_common_xml_node(self, name):
+        interface_name, unit_name = self._split_interface_name(name)
         root_node = build_root_xml_node("interface")
-        build_child_xml_node(root_node, "name", name)
+        build_child_xml_node(root_node, "name", interface_name)
         intf_unit_node = build_child_xml_node(root_node, "unit")
+        build_child_xml_node(intf_unit_node, "name", unit_name)
         return root_node, intf_unit_node
+
+    def _split_interface_name(self, name):
+        if "." in name:
+            interface_name, unit_name = name.rsplit(".", 1)
+            if unit_name.isdigit():
+                return interface_name, unit_name
+        return name, "0"
 
     def _state_replaced(self, want, have):
         """The command generator when state is replaced
@@ -229,28 +241,48 @@ class Acl_interfaces(ConfigBase):
 
         for config in want:
             root_node, unit_node = self._get_common_xml_node(config["name"])
-            build_child_xml_node(unit_node, "name", "0")
+            if config.get("vlan_tagging"):
+                if delete:
+                    build_child_xml_node(root_node, "vlan-tagging", None, delete)
+                else:
+                    build_child_xml_node(root_node, "vlan-tagging")
+            if config.get("vlan_id") is not None:
+                build_child_xml_node(
+                    unit_node,
+                    "vlan-id",
+                    None if delete else str(config["vlan_id"]),
+                    delete,
+                )
             family_node = build_child_xml_node(unit_node, "family")
             for acl_filter in config["access_groups"]:
                 inet_family = "inet"
                 if acl_filter["afi"] == "ipv6":
                     inet_family = "inet6"
+                elif acl_filter["afi"] == "ethernet-switching":
+                    inet_family = "ethernet-switching"
                 inet_node = build_child_xml_node(family_node, inet_family)
                 if acl_filter.get("acls"):
                     filter_node = build_child_xml_node(inet_node, "filter")
+                    singular = (
+                        acl_filter["afi"] == "ethernet-switching"
+                        or config.get("filter_binding", "list") == "singular"
+                    )
                     for acl in acl_filter["acls"]:
                         acl_node = None
+                        # Singular leaves are deleted without a value; only the
+                        # list variants need the name to target a member.
+                        acl_value = None if (delete and singular) else acl["name"]
                         if acl["direction"] == "in":
                             acl_node = build_child_xml_node(
                                 filter_node,
-                                "input-list",
-                                acl["name"],
+                                "input" if singular else "input-list",
+                                acl_value,
                             )
                         else:
                             acl_node = build_child_xml_node(
                                 filter_node,
-                                "output-list",
-                                acl["name"],
+                                "output" if singular else "output-list",
+                                acl_value,
                             )
                         if delete:
                             acl_node.attrib.update(delete)

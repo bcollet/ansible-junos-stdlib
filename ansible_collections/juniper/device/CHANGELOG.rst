@@ -6,6 +6,56 @@ Juniper Device Collection Release Notes
 Changelog for Juniper Device Ansible Collection
 ===========================
 
+Version 2.0.5 (2026-09-11)
+---------------------------
+Enhancements
+------------
+- Supported additional features in juniper.device.junos_interfaces, juniper.device.junos_bgp_global module #865 #874 #875
+
+Bugs Fixed
+-----------
+- Fixed issues in juniper.device.junos_bgp_global #871 #872 #873 
+
+
+Version 2.0.4 (2026-08-20)
+---------------------------
+Enhancements
+------------
+- Supported additional features in juniper.device.junos_interfaces,juniper.device.juniper_acl_interfaces and juniper.device.junos_l3_interfaces module #855 #858 #863
+
+Bugs Fixed
+-----------
+- Fixed issues in juniper.device.juniper_acl_interfaces and juniper.device.junos_l3_interfaces modules #85 #860 #861
+
+
+Version 2.0.3 (2026-08-12)
+---------------------------
+Enhancements
+------------
+- Supported additional features in junos.device.junos_acls module #842 #843 #846 #847 #848 #849 #850 #853
+
+Bugs Fixed
+-----------
+- Fixed issues in juniper.device.junos_acls module #839 #840 #841 #851 #852
+
+Version 2.0.2 (2026-07-13)
+---------------------------
+Enhancements
+------------
+- Added support for commit parameter for each juniperjunos.network
+- Added support for proxy_command parameter
+
+Bugs Fixed
+-----------
+
+- Update the documentation for the juniper.device.software module for version: false (#794). 
+- Make updates to the README.md file (#802). - Implement a fix for the ansible-test sanity failures (#803). 
+- Add multi-collection CI support for juniper.device (#804). 
+- Resolve CI issues and update workflows for jobs: lint, sanity, and unit tests (#789). 
+- Fix to properly handle the JSON response from the get_facts method (#816). 
+- Address the UnboundLocalError: cannot access local variable 'resp' (#822, #823). 
+- Update the file_copy documentation to include parameters as per issue #735.
+
 Version 2.0.1 (2025-11-14)
 ---------------------------
 Enhancements
